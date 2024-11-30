@@ -1,13 +1,13 @@
 // @ts-ignore
 import { Elm } from "./src/Main.elm";
 
-// const accessToken = fetch("https://something.com", {
-//   method: "GET",
-// })
-//   .then((resp) => resp.json())
-//   .then((data) => data.access_token);
-
-const app = Elm.Main.init({
-  node: document.querySelector("main"),
-  flags: window.matchMedia("(prefers-color-scheme: dark)").matches,
-});
+fetch("https://asx.api.markitdigital.com/asx-research/1.0/bbsw/rates", {
+  method: "GET",
+})
+  .then((resp) => resp.json())
+  .then((data) => {
+    const app = Elm.Main.init({
+      node: document.querySelector("main"),
+      flags: data,
+    });
+  });
