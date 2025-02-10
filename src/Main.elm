@@ -1,9 +1,10 @@
 module Main exposing (Msg(..), main, update, view)
 
 import Browser exposing (Document)
-import Html exposing (Html, button, div, h1, text)
+import Html exposing (Html, button, div, h1, h2, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
+import Http exposing (get)
 import Json.Decode as JSON
 import Json.Decode.Pipeline exposing (required)
 
@@ -80,20 +81,20 @@ decode =
 type Model
     = Ready Data
     | Error String
+    | Loading
+
+
+getData : Cmd Msg
+getData =
+    get
+        { url = "https://asx.api.markitdigital.com/asx-research/1.0/bbsw/rates"
+        , expect = Http.expectJson GotData decode
+        }
 
 
 init : JSON.Value -> ( Model, Cmd Msg )
-init flags =
-    let
-        flagsResult =
-            JSON.decodeValue decode flags
-    in
-    case flagsResult of
-        Ok data ->
-            ( Ready data, Cmd.none )
-
-        _ ->
-            ( Error "Failed to decode flags", Cmd.none )
+init _ =
+    ( Loading, getData )
 
 
 subscriptions : Model -> Sub Msg
@@ -107,13 +108,19 @@ main =
 
 
 type Msg
-    = Increment
-    | Decrement
+    = GotData (Result Http.Error Data)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        GotData result ->
+            case result of
+                Err err ->
+                    ( Error "Something bad happened", Cmd.none )
+
+                Ok data ->
+                    ( Ready data, Cmd.none )
 
 
 view : Model -> Document Msg
@@ -121,6 +128,9 @@ view model =
     { title = "ElmHax"
     , body =
         case model of
+            Loading ->
+                [ h2 [] [ text " Loading" ] ]
+
             Ready data ->
                 [ div []
                     (List.map viewItem data.items)
